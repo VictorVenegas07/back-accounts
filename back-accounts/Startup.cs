@@ -2,6 +2,7 @@
 using back_accounts.Extensions;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Models;
 using Persistence;
 using Persistence.Seed;
 using Shared;
@@ -36,7 +37,7 @@ namespace back_accounts
                 catch (Exception e)
                 {
 
-                    throw;
+                    Console.WriteLine($"An error occurred in ScopeWeb: {e.Message}");
                 }
 
             }
@@ -52,7 +53,46 @@ namespace back_accounts
             builder.Services.AddApiVersionExtensions();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Prueba tenica Inteia API",
+                    Version = "v1",
+                    Description = "API para gestionar proveedores",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Victor Venegas",
+                        Email = "victorvenegas07@email.com",
+                        Url = new Uri("https://github.com/VictorVenegas07"),
+                    },
+                });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme.",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                     {
+                        {
+                            new OpenApiSecurityScheme
+                                {
+                                    Reference = new OpenApiReference
+                                       {
+                                        Type = ReferenceType.SecurityScheme,
+                                        Id = "Bearer"
+                                        }
+                                },
+                            new string[] { }
+                        }
+                    });
+            });
         }
 
         private static void Configure(WebApplication app)
@@ -66,7 +106,9 @@ namespace back_accounts
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+
             app.useErrorHandlingMiddleware();
 
             app.MapControllers();

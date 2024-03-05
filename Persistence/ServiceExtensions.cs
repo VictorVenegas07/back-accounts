@@ -59,20 +59,35 @@ namespace Persistence
                 };
                 o.Events = new JwtBearerEvents
                 {
-                    OnAuthenticationFailed = c =>
+                    OnAuthenticationFailed = context =>
                     {
-                        c.NoResult();
-                        c.Response.StatusCode = 500;
-                        c.Response.ContentType = "text/plain";
-                        return c.Response.WriteAsync((c.Exception.ToString()));
+                        if (context.Exception is SecurityTokenSignatureKeyNotFoundException)
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+
+                            var result = JsonConvert.SerializeObject(new Response<string>("Token no válido debido a un problema de firma"));
+                            return context.Response.WriteAsync(result);
+                        }
+
+                        context.NoResult();
+                        context.Response.StatusCode = 500;
+                        context.Response.ContentType = "text/plain";
+                        return context.Response.WriteAsync(context.Exception.ToString());
                     },
                     OnChallenge = context =>
                     {
                         context.HandleResponse();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        var result = JsonConvert.SerializeObject(new Response<string>("usted no esta autorizado"));
-                        return context.Response.WriteAsync(result);
+                        if (!context.Response.HasStarted)
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+
+                            var result = JsonConvert.SerializeObject(new Response<string>("usted no está autorizado"));
+                            return context.Response.WriteAsync(result);
+                        }
+
+                        return Task.CompletedTask;
                     },
                     OnForbidden = context =>
                     {

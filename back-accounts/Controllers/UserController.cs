@@ -3,6 +3,7 @@ using Aplication.Feauters.Users.Command.AuthenticateCommand;
 using Aplication.Feauters.Users.Command.DeleteUserCommand;
 using Aplication.Feauters.Users.Command.RegisterCommand;
 using Aplication.Feauters.Users.Command.UpdateUserCommand;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Xml.Linq;
 
@@ -13,6 +14,7 @@ namespace back_accounts.Controllers
     [ApiController]
     public class UserController : BaseApiController
     {
+        [AllowAnonymous]
         [HttpPost("authenticate")]
         public async Task<IActionResult> AuthenticateAsync(AuthenticationRequest request)
         {
@@ -38,9 +40,10 @@ namespace back_accounts.Controllers
 
         }
         [HttpDelete("Delete")]
+        [Authorize]
         public async Task<ActionResult> RegisterAsync(string id)
         {
-            return Ok(await Mediator.Send(new DeleteUserCommand { Id = id}));
+            return Ok(await Mediator.Send(new DeleteUserCommand { Id = id }));
 
         }
         private string GenerateIPAddress()
